@@ -27,4 +27,4 @@ arch: # Architecture and model
 observers:
     neptune:
         enable: Yes
-        project: mlelarge/TSP
+        project: mautrib/TSP
