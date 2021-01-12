@@ -97,19 +97,20 @@ def train_tsp(train_loader,model,criterion,optimizer,
     logger.update_value_meter('hyperparams', 'learning_rate', learning_rate)
     end = time.time()
 
-    for i, (input, target, mask) in enumerate(train_loader):
+    for i, (input, target) in enumerate(train_loader):
         batch_size = input.shape[0]
         # measure data loading time
         logger.update_meter('train', 'data_time', time.time() - end, n=batch_size)
 
         input = input.to(device)
-        mask = mask.to(device)
+        #mask = mask.to(device)
         target = target.to(device)
         target = target.type(torch.float32)
         
         raw_scores = model(input).squeeze(-1)
+        print(f"Raw score shape : {raw_scores}")
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
-        loss = criterion(raw_scores,mask,target)
+        loss = criterion(raw_scores,target)
         logger.update_meter('train', 'loss', loss.data.item(), n=1)
         #optimizer.zero_grad()
         loss.backward()
@@ -122,7 +123,7 @@ def train_tsp(train_loader,model,criterion,optimizer,
             optimizer.zero_grad()
             if eval_score is not None:
                 #print(np_out.shape)
-                prec, rec, f1 = eval_score(raw_scores*mask,target,device)
+                prec, rec, f1 = eval_score(raw_scores,target,device) #Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
                 #print(acc_max, n, bs)
                 logger.update_meter('train', 'f1', f1)
             print('Epoch: [{0}][{1}/{2}]\t'

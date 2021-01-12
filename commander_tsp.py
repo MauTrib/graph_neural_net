@@ -9,6 +9,7 @@ from toolbox import logger, metrics
 from models import get_model
 from loaders.siamese_loaders import siamese_loader
 from loaders.tsp_data import TSP
+from loaders.tsp_data_generator import TSPGenerator
 from toolbox.optimizer import get_optimizer
 from toolbox.losses import tsp_loss
 from toolbox import utils
@@ -29,11 +30,11 @@ def set_experiment_name(config, command_name, logger):
 @ex.config_hook
 def update_config(config, command_name, logger):
     config.update(log_dir='{}/runs/{}/TSP_{}_{}_{}_{}_{}_{}/'.format(
-        config['root_dir'], config['name'], config['arch']['arch'], config['data']['n_vertices'],
+        config['root_dir'], config['name'], config['arch']['arch'], config['train_data']['n_vertices'],
         config['arch']['num_blocks'],config['arch']['in_features'],
         config['arch']['out_features'], config['arch']['depth_of_mlp']),
                    # Some funcs need path_dataset while not requiring the whole data dict
-                   path_dataset=config['data']['path_dataset'])
+                   path_dataset=config['train_data']['path_dataset'])
                    #res_dir='{}/runs/{}/res'.format(config['root_dir'], config['name'])
     return config
 
@@ -101,7 +102,7 @@ def save_checkpoint(state, is_best, log_dir, filename='checkpoint.pth.tar'):
 
 
 @ex.automain
-def main(cpu, data, train, arch):
+def main(cpu, train_data, train, arch):
     """ Main func.
     """
     global best_score, best_epoch
@@ -117,17 +118,21 @@ def main(cpu, data, train, arch):
     exp_logger = init_logger()
     
     #dataset_train = TSP('dataset_tsp',split='train')
-    dataset_train = TSP('TSP',file_name='tsp50-500_' ,split='train')
+    #dataset_train = TSP('TSP',file_name='tsp50-500_' ,split='train')
+    dataset_train = TSPGenerator('train',train_data)
+    dataset_train.load_dataset()
     train_loader = siamese_loader(dataset_train,train['batch_size'],constant_n_vertices=True)
     #dataset_val = TSP('dataset_tsp',split='val')
-    dataset_val = TSP('TSP',file_name='tsp50-500_' ,split='val')
+    #dataset_val = TSP('TSP',file_name='tsp50-500_' ,split='val')
+    dataset_val = TSPGenerator('val',train_data)
+    dataset_val.load_dataset()
     val_loader = siamese_loader(dataset_val,train['batch_size'],constant_n_vertices=True)
     
     model = get_model(arch)
     model_path = './runs/TSP-50-new/TSP_Simple_Edge_Embedding_50_4_64_1_3'
     model_file = os.path.join(model_path,'model_best.pth.tar')
-    checkpoint = torch.load(model_file)
-    model.load_state_dict(checkpoint['state_dict'])
+    #checkpoint = torch.load(model_file)
+    #model.load_state_dict(checkpoint['state_dict'])
     optimizer, scheduler = get_optimizer(train,model)
     criterion = tsp_loss()
 

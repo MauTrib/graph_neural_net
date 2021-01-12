@@ -3,8 +3,11 @@ name: TSP-50-cont
 cpu: Yes
 root_dir: .
 
-data: # Data related parameters
-    n_vertices: 50
+train_data: # Data related parameters
+    num_examples_train: 2000
+    num_examples_val: 1000
+    generative_model: GaussNormal
+    n_vertices: 5
     path_dataset: dataset_tsp #TSP #dataset_tsp # Path where datasets are stored
 
 train: # Training parameters

@@ -39,9 +39,9 @@ class tsp_loss(nn.Module):
         self.loss = loss
         self.normalize = torch.nn.Sigmoid()#Softmax(dim=2)
         
-    def forward(self, raw_scores, mask, target):
+    def forward(self, raw_scores, target):#Used to have also a mask as argument -> Ask MLelarge
         """
         raw_scores (bs,n_vertices,n_vertices)
         """
         proba = self.normalize(raw_scores)
-        return torch.mean(mask*self.loss(proba,target))
+        return torch.mean(self.loss(proba,target)) # Was return torch.mean(mask*self.loss(proba,target))
