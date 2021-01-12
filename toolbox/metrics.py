@@ -62,6 +62,7 @@ def make_meter_tsp():
         'loss': Meter(),
         'f1': Meter(),
         #'acc_gr': Meter(),
+        'acc_true':Meter(),
         'batch_time': Meter(),
         'data_time': Meter(),
         'epoch_time': Meter(),
@@ -161,3 +162,10 @@ def compute_f1(raw_scores,target,device):
     y_onehot = torch.zeros_like(raw_scores).to(device)
     y_onehot.scatter_(2, ind, 1)
     return f1_score(y_onehot,target,device=device)
+
+def compute_accuracy_tsp(raw_scores,target,device):
+    _, ind = torch.topk(raw_scores, 2, dim =2)
+    y_onehot = torch.zeros_like(raw_scores).to(device)
+    y_onehot.scatter_(2, ind, 1)
+    return torch.all(y_onehot==target,dim=1).all(dim=1)
+

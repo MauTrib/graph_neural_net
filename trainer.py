@@ -93,11 +93,15 @@ def train_tsp(train_loader,model,criterion,optimizer,
     model.train()
     logger.reset_meters('train')
     logger.reset_meters('hyperparams')
+    logger.reset_meters('acc_true')
     learning_rate = optimizer.param_groups[0]['lr']
     logger.update_value_meter('hyperparams', 'learning_rate', learning_rate)
     end = time.time()
 
+    n_true = 0 #Number of true paths found
+
     for i, (input, target) in enumerate(train_loader):
+
         batch_size = input.shape[0]
         # measure data loading time
         logger.update_meter('train', 'data_time', time.time() - end, n=batch_size)
@@ -108,6 +112,15 @@ def train_tsp(train_loader,model,criterion,optimizer,
         target = target.type(torch.float32)
         
         raw_scores = model(input).squeeze(-1)
+
+        
+        results = metrics.compute_accuracy_tsp(raw_scores,target,device=device)
+        #print(results)
+        n_true += torch.sum( results.to(torch.int64) )
+        n_total = (i+1)*batch_size
+        curr_acc = float(n_true/n_total)
+        logger.update_meter('train','acc_true',curr_acc)
+
         #print(f"Raw score shape : {raw_scores}")
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
         loss = criterion(raw_scores,target) 
@@ -119,12 +132,14 @@ def train_tsp(train_loader,model,criterion,optimizer,
         logger.update_meter('train', 'batch_time', time.time() - end, n=batch_size)
         end = time.time()   
         if i % print_freq == 0:
-            print(f"RS : {raw_scores}\n\n SOL : {target}")
+            #print(f"RS : {raw_scores}\n\n SOL : {target}")
             optimizer.step()
             optimizer.zero_grad()
             if eval_score is not None:
                 #print(np_out.shape)
                 prec, rec, f1 = eval_score(raw_scores,target,device) #Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
+
+
                 #print(acc_max, n, bs)
                 logger.update_meter('train', 'f1', f1)
             print('Epoch: [{0}][{1}/{2}]\t'
@@ -132,13 +147,16 @@ def train_tsp(train_loader,model,criterion,optimizer,
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                   'LR {lr:.2e}\t'
                   'Loss {loss.avg:.4f} ({loss.val:.4f})\t'
-                  'F1 {f1.avg:.3f} ({f1.val:.3f})'.format(
+                  'F1 {f1.avg:.3f} ({f1.val:.3f})\t'
+                  'Acc {curr_acc:.3f}'.format(
                    epoch, i, len(train_loader), batch_time=logger.get_meter('train', 'batch_time'),
                    data_time=logger.get_meter('train', 'data_time'), lr=learning_rate,
-                   loss=logger.get_meter('train', 'loss'), f1=logger.get_meter('train', 'f1')))
+                   loss=logger.get_meter('train', 'loss'), f1=logger.get_meter('train', 'f1'),
+                   curr_acc=curr_acc))
 
     logger.log_meters('train', n=epoch)
     logger.log_meters('hyperparams', n=epoch)
+    logger.log_meters('acc_true',n=epoch)
 
 
 def val_tsp(val_loader,model,criterion,

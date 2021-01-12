@@ -64,6 +64,7 @@ def init_logger(name, _config, _run):
     exp_logger.add_meters('val', metrics.make_meter_tsp())
     #exp_logger.add_meters('test', metrics.make_meter_matching())
     exp_logger.add_meters('hyperparams', {'learning_rate': metrics.ValueMeter()})
+    exp_logger.add_meters('acc_true',metrics.make_meter_tsp())
     return exp_logger
  
 @ex.capture
