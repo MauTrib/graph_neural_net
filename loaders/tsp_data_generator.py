@@ -1,4 +1,5 @@
 import os
+import math
 import random
 import itertools
 import networkx
@@ -26,10 +27,16 @@ def generates(name):
 def generate_gauss_normal_netx(N):
     """ Generate random graph with points"""
     pos = {i: (random.gauss(0, 1), random.gauss(0, 1)) for i in range(N)} #Define the positions of the points
+    W_dist = torch.zeros((N,N))
+    for i in range(0,N-1):
+        for j in range(i+1,N):
+            curr_dist = math.sqrt( (pos[i][0]-pos[j][0])**2 + (pos[i][1]-pos[j][1])**2)
+            W_dist[i,j] = curr_dist
+            W_dist[j,i] = curr_dist
     g = networkx.random_geometric_graph(N,0,pos=pos)
     g.add_edges_from(networkx.complete_graph(N).edges)
     W = networkx.adjacency_matrix(g).todense()
-    return g, torch.as_tensor(W, dtype=torch.float)
+    return g, torch.as_tensor(W_dist, dtype=torch.float)
 
 def is_swappable(g, u, v, s, t):
     """
@@ -50,6 +57,17 @@ def adjacency_matrix_to_tensor_representation(W):
     indices = torch.arange(len(W))
     B[indices, indices, 0] = degrees
     return B
+
+def distance_matrix_tensor_representation(W):
+    """ Create a tensor B[:,:,1] = W and B[i,i,0] = deg(i)"""
+    W_adjacency = torch.sign(W)
+    degrees = W_adjacency.sum(1)
+    B = torch.zeros((len(W), len(W), 2))
+    B[:, :, 1] = W
+    indices = torch.arange(len(W))
+    B[indices, indices, 0] = degrees
+    return B
+
 
 class Base_Generator(torch.utils.data.Dataset):
     def __init__(self, name, path_dataset, num_examples):
@@ -95,9 +113,11 @@ class TSPGenerator(Base_Generator):
     """
     def __init__(self, name, args):
         self.generative_model = args['generative_model']
+        self.distance = args['distance_used']
         num_examples = args['num_examples_' + name]
         self.n_vertices = args['n_vertices']
-        subfolder_name = 'TSP_{}_{}_{}'.format(self.generative_model,
+        subfolder_name = 'TSP_{}_{}_{}_{}'.format(self.generative_model, 
+                                                     self.distance,
                                                      num_examples,
                                                      self.n_vertices)
         path_dataset = os.path.join(args['path_dataset'],
@@ -110,7 +130,7 @@ class TSPGenerator(Base_Generator):
 
     def compute_example(self):
         """
-        Compute pairs (Adjacency, Optimal Tour Distance)
+        Compute pairs (Adjacency, Optimal Tour)
         """
         try:
             g, W = GENERATOR_FUNCTIONS[self.generative_model](self.n_vertices)
@@ -120,17 +140,19 @@ class TSPGenerator(Base_Generator):
         xs = [g.nodes[node]['pos'][0] for node in g.nodes]
         ys = [g.nodes[node]['pos'][1] for node in g.nodes]
 
-        problem = TSPSolver.from_data(xs,ys,"EUC_2D")
+        problem = TSPSolver.from_data(xs,ys,self.distance)
         solution = problem.solve(verbose=False)
         assert solution.success, "Couldn't find solution!"
 
-        B = adjacency_matrix_to_tensor_representation(W)
+        print(W)
+        B = distance_matrix_tensor_representation(W)
         
         SOL = torch.zeros((self.n_vertices,self.n_vertices),dtype=torch.int64)
         prec = solution.tour[-1]
         for i in range(self.n_vertices):
             curr = solution.tour[i]
             SOL[curr,prec] = 1
+            SOL[prec,curr] = 1
             prec = curr
 
         return (B, SOL)
@@ -138,10 +160,11 @@ class TSPGenerator(Base_Generator):
     
 if __name__=="__main__":
     name="train"
-    args = {'generative_model': "GaussNormal",'num_examples_train':200,'n_vertices':50,'path_dataset':"dataset_tsp"}
+    args = {'generative_model': "GaussNormal",'num_examples_train':1,'n_vertices':5,'distance_used':'EUC_2D', 'path_dataset':"dataset_tsp"}
     tspg = TSPGenerator(name,args)
     time_taken = timeit.timeit(tspg.load_dataset,number=1)
     print(f"Took : {time_taken}s => {args['num_examples_train']/time_taken} TSPs per second")
+    
 
 
 

@@ -44,4 +44,5 @@ class tsp_loss(nn.Module):
         raw_scores (bs,n_vertices,n_vertices)
         """
         proba = self.normalize(raw_scores)
-        return torch.mean(self.loss(proba,target)) # Was return torch.mean(mask*self.loss(proba,target))
+        loss = self.loss(proba,target)
+        return torch.mean(loss) # Was return torch.mean(mask*self.loss(proba,target))

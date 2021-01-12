@@ -7,11 +7,12 @@ train_data: # Data related parameters
     num_examples_train: 2000
     num_examples_val: 1000
     generative_model: GaussNormal
+    distance_used: EUC_2D
     n_vertices: 5
     path_dataset: dataset_tsp #TSP #dataset_tsp # Path where datasets are stored
 
 train: # Training parameters
-    epoch: 100
+    epoch: 10
     batch_size: 1
     lr: !!float 1e-3
     scheduler_step: 1

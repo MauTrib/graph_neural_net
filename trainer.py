@@ -108,9 +108,9 @@ def train_tsp(train_loader,model,criterion,optimizer,
         target = target.type(torch.float32)
         
         raw_scores = model(input).squeeze(-1)
-        print(f"Raw score shape : {raw_scores}")
+        #print(f"Raw score shape : {raw_scores}")
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
-        loss = criterion(raw_scores,target)
+        loss = criterion(raw_scores,target) 
         logger.update_meter('train', 'loss', loss.data.item(), n=1)
         #optimizer.zero_grad()
         loss.backward()
@@ -119,6 +119,7 @@ def train_tsp(train_loader,model,criterion,optimizer,
         logger.update_meter('train', 'batch_time', time.time() - end, n=batch_size)
         end = time.time()   
         if i % print_freq == 0:
+            print(f"RS : {raw_scores}\n\n SOL : {target}")
             optimizer.step()
             optimizer.zero_grad()
             if eval_score is not None:
@@ -145,20 +146,20 @@ def val_tsp(val_loader,model,criterion,
     model.eval()
     logger.reset_meters(val_test)
 
-    for i, (input, target, mask) in enumerate(val_loader):
+    for i, (input, target) in enumerate(val_loader): #Was for i, (input, target, mask) in enumerate(val_loader):
         input = input.to(device)
         target = target.to(device)
         target = target.type(torch.float32)
-        mask = mask.to(device)
+        #mask = mask.to(device)
 
         with torch.no_grad():
             raw_scores = model(input).squeeze(-1)
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
-        loss = criterion(raw_scores,mask,target)
+        loss = criterion(raw_scores,target) #Was loss = criterion(raw_scores,mask,target)
         logger.update_meter('val', 'loss', loss.data.item(), n=1)
     
         if eval_score is not None:
-            prec, rec, f1 = eval_score(raw_scores*mask,target,device)
+            prec, rec, f1 = eval_score(raw_scores,target,device) # Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
             logger.update_meter(val_test, 'f1', f1)
         if i % print_freq == 0:
             current_f1 = logger.get_meter(val_test, 'f1')

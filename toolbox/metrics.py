@@ -160,4 +160,4 @@ def compute_f1(raw_scores,target,device):
     _, ind = torch.topk(raw_scores, 3, dim =2)
     y_onehot = torch.zeros_like(raw_scores).to(device)
     y_onehot.scatter_(2, ind, 1)
-    return f1_score(y_onehot,target)
+    return f1_score(y_onehot,target,device=device)
