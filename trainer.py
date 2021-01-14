@@ -100,7 +100,7 @@ def train_tsp(train_loader,model,criterion,optimizer,
 
     n_true = 0 #Number of true paths found
 
-    for i, (input, target) in enumerate(train_loader):
+    for i, (input, target,_) in enumerate(train_loader):
 
         batch_size = input.shape[0]
         # measure data loading time

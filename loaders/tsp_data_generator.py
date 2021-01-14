@@ -170,7 +170,7 @@ class TSPGenerator(Base_Generator):
             SOL[prec,curr] = 1
             prec = curr
 
-        return (B, SOL)
+        return (B, SOL,(xs,ys))
 
     
 if __name__=="__main__":
