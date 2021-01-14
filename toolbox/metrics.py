@@ -165,6 +165,7 @@ def compute_f1(raw_scores,target,device,topk=2):
 
 def get_path(raw_scores,device='cpu'):
     _, ind = torch.topk(raw_scores, 2, dim =2)
+    ind = ind.to(device)
     y_onehot = torch.zeros_like(raw_scores).to(device)
     y_onehot.scatter_(2, ind, 1)
     return y_onehot

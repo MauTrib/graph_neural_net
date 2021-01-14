@@ -4,10 +4,12 @@ from models.base_model import Simple_Edge_Embedding
 import torch
 import toolbox.vision as vision
 
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+
 ##Arguments
 
 name="train"
-args_tspg = {'generative_model': "Square01",'num_examples_train':1,'n_vertices':10,'distance_used':'EUC_2D', 'path_dataset':"dataset_tsp"}
+args_tspg = {'generative_model': "Square01",'num_examples_train':1,'n_vertices':50,'distance_used':'EUC_2D', 'path_dataset':"dataset_tsp"}
 args_model = {'num_blocks': 2,
     'original_features_num': 2,
     'in_features': 64,
@@ -19,6 +21,7 @@ batch_size=1
 shuffle=True
 
 model = Simple_Edge_Embedding(**args_model)
+model.to(device)
 
 criterion = torch.nn.BCELoss(reduction='none')
 reduction = torch.mean
@@ -35,10 +38,14 @@ train_loader = torch.utils.data.DataLoader(tspg, batch_size=batch_size, shuffle=
 
 for epoch in range(n_epoch):
     for i, (data,target,g) in enumerate(train_loader):
-
+        
+        target = target.to(device)
+        data = data.to(device)
+        
         output = model(data).squeeze(-1)
-        results = metrics.compute_accuracy_tsp(output,target)
-        prec, rec, f1 = metrics.compute_f1(output,target,'cpu',topk=3)
+        
+        results = metrics.compute_accuracy_tsp(output,target,device=device)
+        _, rec, f1 = metrics.compute_f1(output,target,device,topk=3)
         
 
         probs = normalize(output)
@@ -53,8 +60,8 @@ for epoch in range(n_epoch):
         loss.backward()
         optimizer.step()
     scheduler.step(loss)
-    print(f"Epoch {epoch}, lr {optimizer.param_groups[0]['lr']:.8f} => loss : {loss:.6f}, rec : {rec:.2f}, worked = {torch.count_nonzero(results)}/{batch_size}")
+    print(f"Epoch {epoch}, lr {optimizer.param_groups[0]['lr']:.8f} => loss : {loss:.6f}, rec : {rec:.4f}, f1 : {f1:.4f}, worked = {torch.count_nonzero(results)}/{batch_size}")
 
 #print(data,output,loss_not_reduced,target,sep="\n")
 print(metrics.get_path(output)[0])
-vision.compare(g[0],g[1],metrics.get_path(output)[0],target[0])
+vision.compare(g[0],g[1],metrics.get_path(output)[0],target[0].detach().cpu())
