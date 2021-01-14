@@ -16,6 +16,16 @@ def check_dir(dir_path):
 
 GENERATOR_FUNCTIONS = {}
 
+def dist_from_pos(pos):
+    N = len(pos)
+    W_dist = torch.zeros((N,N))
+    for i in range(0,N-1):
+        for j in range(i+1,N):
+            curr_dist = math.sqrt( (pos[i][0]-pos[j][0])**2 + (pos[i][1]-pos[j][1])**2)
+            W_dist[i,j] = curr_dist
+            W_dist[j,i] = curr_dist
+    return W_dist
+
 def generates(name):
     """ Register a generator function for a graph distribution """
     def decorator(func):
@@ -27,16 +37,21 @@ def generates(name):
 def generate_gauss_normal_netx(N):
     """ Generate random graph with points"""
     pos = {i: (random.gauss(0, 1), random.gauss(0, 1)) for i in range(N)} #Define the positions of the points
-    W_dist = torch.zeros((N,N))
-    for i in range(0,N-1):
-        for j in range(i+1,N):
-            curr_dist = math.sqrt( (pos[i][0]-pos[j][0])**2 + (pos[i][1]-pos[j][1])**2)
-            W_dist[i,j] = curr_dist
-            W_dist[j,i] = curr_dist
+    W_dist = dist_from_pos(pos)
     g = networkx.random_geometric_graph(N,0,pos=pos)
     g.add_edges_from(networkx.complete_graph(N).edges)
     W = networkx.adjacency_matrix(g).todense()
     return g, torch.as_tensor(W_dist, dtype=torch.float)
+
+@generates("Square01")
+def generate_square_netx(N):
+    pos = {i: (random.random(), random.random()) for i in range(N)} #Define the positions of the points
+    W_dist = dist_from_pos(pos)
+    g = networkx.random_geometric_graph(N,0,pos=pos)
+    g.add_edges_from(networkx.complete_graph(N).edges)
+    W = networkx.adjacency_matrix(g).todense()
+    return g, torch.as_tensor(W_dist, dtype=torch.float)
+
 
 def is_swappable(g, u, v, s, t):
     """

@@ -157,8 +157,8 @@ def f1_score(preds,labels,device = 'cuda'):
         f1 = 2*prec*rec/(prec+rec)
     return prec, rec, f1#, n, bs
 
-def compute_f1(raw_scores,target,device):
-    _, ind = torch.topk(raw_scores, 2, dim =2)
+def compute_f1(raw_scores,target,device,topk=2):
+    _, ind = torch.topk(raw_scores, topk, dim =2)
     y_onehot = torch.zeros_like(raw_scores).to(device)
     y_onehot.scatter_(2, ind, 1)
     return f1_score(y_onehot,target,device=device)
