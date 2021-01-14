@@ -158,12 +158,12 @@ def f1_score(preds,labels,device = 'cuda'):
     return prec, rec, f1#, n, bs
 
 def compute_f1(raw_scores,target,device):
-    _, ind = torch.topk(raw_scores, 3, dim =2)
+    _, ind = torch.topk(raw_scores, 2, dim =2)
     y_onehot = torch.zeros_like(raw_scores).to(device)
     y_onehot.scatter_(2, ind, 1)
     return f1_score(y_onehot,target,device=device)
 
-def compute_accuracy_tsp(raw_scores,target,device):
+def compute_accuracy_tsp(raw_scores,target,device='cpu'):
     _, ind = torch.topk(raw_scores, 2, dim =2)
     y_onehot = torch.zeros_like(raw_scores).to(device)
     y_onehot.scatter_(2, ind, 1)

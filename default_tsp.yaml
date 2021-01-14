@@ -12,10 +12,10 @@ train_data: # Data related parameters
     path_dataset: dataset_tsp #TSP #dataset_tsp # Path where datasets are stored
 
 train: # Training parameters
-    epoch: 10
+    epoch: 100
     batch_size: 1
     lr: !!float 1e-3
-    scheduler_step: 1
+    scheduler_step: 10
     scheduler_decay: 0.9
     print_freq: 64
 

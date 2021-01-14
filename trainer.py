@@ -125,16 +125,16 @@ def train_tsp(train_loader,model,criterion,optimizer,
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
         loss = criterion(raw_scores,target) 
         logger.update_meter('train', 'loss', loss.data.item(), n=1)
-        #optimizer.zero_grad()
+        optimizer.zero_grad()
         loss.backward()
-        #optimizer.step()
+        optimizer.step()
         # measure elapsed time
         logger.update_meter('train', 'batch_time', time.time() - end, n=batch_size)
         end = time.time()   
         if i % print_freq == 0:
-            #print(f"RS : {raw_scores}\n\n SOL : {target}")
-            optimizer.step()
-            optimizer.zero_grad()
+            #print(f"RS : {raw_scores}\n\n SOL    : {target}")
+            #optimizer.step()
+            #optimizer.zero_grad()
             if eval_score is not None:
                 #print(np_out.shape)
                 prec, rec, f1 = eval_score(raw_scores,target,device) #Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
