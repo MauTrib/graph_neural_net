@@ -159,7 +159,7 @@ class TSPGenerator(Base_Generator):
         solution = problem.solve(verbose=False)
         assert solution.success, "Couldn't find solution!"
 
-        print(W)
+        #print(W)
         B = distance_matrix_tensor_representation(W)
         
         SOL = torch.zeros((self.n_vertices,self.n_vertices),dtype=torch.int64)

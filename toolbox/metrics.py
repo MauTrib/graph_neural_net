@@ -62,10 +62,12 @@ def make_meter_tsp():
         'loss': Meter(),
         'f1': Meter(),
         #'acc_gr': Meter(),
+        'recall': Meter(),
         'acc_true':Meter(),
         'batch_time': Meter(),
         'data_time': Meter(),
         'epoch_time': Meter(),
+        
     }
     return meters_dict
 
@@ -157,14 +159,14 @@ def f1_score(preds,labels,device = 'cuda'):
         f1 = 2*prec*rec/(prec+rec)
     return prec, rec, f1#, n, bs
 
-def compute_f1(raw_scores,target,device,topk=2):
+def compute_f1(raw_scores,target,device,topk=3):
     _, ind = torch.topk(raw_scores, topk, dim =2)
     y_onehot = torch.zeros_like(raw_scores).to(device)
     y_onehot.scatter_(2, ind, 1)
     return f1_score(y_onehot,target,device=device)
 
-def get_path(raw_scores,device='cpu'):
-    _, ind = torch.topk(raw_scores, 2, dim =2)
+def get_path(raw_scores,device='cpu',topk=2):
+    _, ind = torch.topk(raw_scores, topk, dim =2)
     ind = ind.to(device)
     y_onehot = torch.zeros_like(raw_scores).to(device)
     y_onehot.scatter_(2, ind, 1)

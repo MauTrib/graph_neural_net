@@ -9,15 +9,15 @@ device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 ##Arguments
 
 name="train"
-args_tspg = {'generative_model': "Square01",'num_examples_train':1,'n_vertices':50,'distance_used':'EUC_2D', 'path_dataset':"dataset_tsp"}
-args_model = {'num_blocks': 2,
+args_tspg = {'generative_model': "GaussNormal",'num_examples_train':1000,'n_vertices':10,'distance_used':'EUC_2D', 'path_dataset':"dataset_tsp"}
+args_model = {'num_blocks': 4,
     'original_features_num': 2,
     'in_features': 64,
     'out_features': 1,
-    'depth_of_mlp': 2}
+    'depth_of_mlp': 3}
 
 n_epoch=1000
-batch_size=1
+batch_size=10
 shuffle=True
 
 model = Simple_Edge_Embedding(**args_model)
@@ -63,5 +63,4 @@ for epoch in range(n_epoch):
     print(f"Epoch {epoch}, lr {optimizer.param_groups[0]['lr']:.8f} => loss : {loss:.6f}, rec : {rec:.4f}, f1 : {f1:.4f}, worked = {torch.count_nonzero(results)}/{batch_size}")
 
 #print(data,output,loss_not_reduced,target,sep="\n")
-print(metrics.get_path(output)[0])
-vision.compare(g[0],g[1],metrics.get_path(output)[0],target[0].detach().cpu())
+vision.compare(g[0][0],g[0][1],metrics.get_path(output,topk=2)[0],target[0].detach().cpu())

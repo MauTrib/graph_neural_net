@@ -62,9 +62,8 @@ def init_logger(name, _config, _run):
     exp_logger = logger.Experiment(name, _config, run=_run)
     exp_logger.add_meters('train', metrics.make_meter_tsp())
     exp_logger.add_meters('val', metrics.make_meter_tsp())
-    #exp_logger.add_meters('test', metrics.make_meter_matching())
+    #exp_logger.add_meters('test', metrics.make_meter_matdching())
     exp_logger.add_meters('hyperparams', {'learning_rate': metrics.ValueMeter()})
-    exp_logger.add_meters('acc_true',metrics.make_meter_tsp())
     return exp_logger
  
 @ex.capture
@@ -130,7 +129,7 @@ def main(cpu, train_data, train, arch):
     val_loader = siamese_loader(dataset_val,train['batch_size'],constant_n_vertices=True)
     
     model = get_model(arch)
-    model_path = './runs/TSP-50-new/TSP_Simple_Edge_Embedding_50_4_64_1_3'
+    model_path = './runs/TSP-50-cont/TSP_Simple_Edge_Embedding_50_4_64_1_3'
     model_file = os.path.join(model_path,'model_best.pth.tar')
     #checkpoint = torch.load(model_file)
     #model.load_state_dict(checkpoint['state_dict'])
@@ -146,14 +145,15 @@ def main(cpu, train_data, train, arch):
     #print(log_dir_ckpt)
     for epoch in range(train['epoch']):
         print('Current epoch: ', epoch)
-        trainer.train_tsp(train_loader,model,criterion,optimizer,
+        loss = trainer.train_tsp(train_loader,model,criterion,optimizer,
         exp_logger,device,epoch,eval_score=metrics.compute_f1,
         print_freq=train['print_freq'])
+        scheduler.step(loss)
         
         f1, loss = trainer.val_tsp(val_loader,model,criterion,
         exp_logger,device,epoch,eval_score=metrics.compute_f1)
         #print_freq=train['print_freq'])
-        scheduler.step(loss)
+        #scheduler.step(loss)
         # remember best acc and save checkpoint
         is_best = (f1 > best_score)
         best_score = max(f1, best_score)

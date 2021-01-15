@@ -93,7 +93,6 @@ def train_tsp(train_loader,model,criterion,optimizer,
     model.train()
     logger.reset_meters('train')
     logger.reset_meters('hyperparams')
-    logger.reset_meters('acc_true')
     learning_rate = optimizer.param_groups[0]['lr']
     logger.update_value_meter('hyperparams', 'learning_rate', learning_rate)
     end = time.time()
@@ -125,16 +124,16 @@ def train_tsp(train_loader,model,criterion,optimizer,
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
         loss = criterion(raw_scores,target) 
         logger.update_meter('train', 'loss', loss.data.item(), n=1)
-        optimizer.zero_grad()
+        #optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+        #optimizer.step()
         # measure elapsed time
         logger.update_meter('train', 'batch_time', time.time() - end, n=batch_size)
         end = time.time()   
         if i % print_freq == 0:
             #print(f"RS : {raw_scores}\n\n SOL    : {target}")
-            #optimizer.step()
-            #optimizer.zero_grad()
+            optimizer.step()
+            optimizer.zero_grad()
             if eval_score is not None:
                 #print(np_out.shape)
                 prec, rec, f1 = eval_score(raw_scores,target,device) #Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
@@ -142,21 +141,24 @@ def train_tsp(train_loader,model,criterion,optimizer,
 
                 #print(acc_max, n, bs)
                 logger.update_meter('train', 'f1', f1)
+                logger.update_meter('train', 'recall', rec)
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                   'LR {lr:.2e}\t'
                   'Loss {loss.avg:.4f} ({loss.val:.4f})\t'
                   'F1 {f1.avg:.3f} ({f1.val:.3f})\t'
+                  'Recall {rec.avg:.3f} ({rec.val:.3f})\t'
                   'Acc {curr_acc:.3f}'.format(
                    epoch, i, len(train_loader), batch_time=logger.get_meter('train', 'batch_time'),
                    data_time=logger.get_meter('train', 'data_time'), lr=learning_rate,
                    loss=logger.get_meter('train', 'loss'), f1=logger.get_meter('train', 'f1'),
-                   curr_acc=curr_acc))
+                   rec=logger.get_meter('train','recall'), curr_acc=curr_acc))
 
     logger.log_meters('train', n=epoch)
     logger.log_meters('hyperparams', n=epoch)
-    logger.log_meters('acc_true',n=epoch)
+    los = logger.get_meter('train','loss')
+    return los.avg
 
 
 def val_tsp(val_loader,model,criterion,
@@ -164,7 +166,7 @@ def val_tsp(val_loader,model,criterion,
     model.eval()
     logger.reset_meters(val_test)
 
-    for i, (input, target) in enumerate(val_loader): #Was for i, (input, target, mask) in enumerate(val_loader):
+    for i, (input, target,_) in enumerate(val_loader): #Was for i, (input, target, mask) in enumerate(val_loader):
         input = input.to(device)
         target = target.to(device)
         target = target.type(torch.float32)
@@ -179,21 +181,24 @@ def val_tsp(val_loader,model,criterion,
         if eval_score is not None:
             prec, rec, f1 = eval_score(raw_scores,target,device) # Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
             logger.update_meter(val_test, 'f1', f1)
+            logger.update_meter(val_test, 'recall',rec)
         if i % print_freq == 0:
             current_f1 = logger.get_meter(val_test, 'f1')
             los = logger.get_meter(val_test, 'loss')
             if val_test == 'val':
                 print('Validation set, epoch: [{0}][{1}/{2}]\t'
                     'Loss {loss.avg:.4f} ({loss.val:.4f})\t'
-                    'F1 {f1.avg:.3f} ({f1.val:.3f})'.format(
+                    'F1 {f1.avg:.3f} ({f1.val:.3f})\t'
+                    'Rec {rec.avg:.3f} ({rec.val:.3f})'.format(
                     epoch, i, len(val_loader), loss=logger.get_meter(val_test, 'loss'),
-                    f1=current_f1))
+                    f1=current_f1, rec = logger.get_meter(val_test,'recall')))
             else:
                 print('Test set, epoch: [{0}][{1}/{2}]\t'
                     'Loss {loss.avg:.4f} ({loss.val:.4f})\t'
-                    'F1 {acc.avg:.3f} ({acc.val:.3f})'.format(
+                    'F1 {acc.avg:.3f} ({acc.val:.3f})\t'
+                    'Rec {rec.avg:.3f} ({rec.val:.3f})'.format(
                     epoch, i, len(val_loader), loss=logger.get_meter(val_test, 'loss'),
-                    f1=current_f1))
+                    f1=current_f1, rec=logger.get_meter(val_test,'recall')))
 
     logger.log_meters(val_test, n=epoch)
     return current_f1.avg, los.avg
