@@ -4,11 +4,11 @@ cpu: Yes
 root_dir: .
 
 train_data: # Data related parameters
-    num_examples_train: 2000
-    num_examples_val: 1000
+    num_examples_train: 10
+    num_examples_val: 10
     generative_model: GaussNormal
     distance_used: EUC_2D
-    n_vertices: 5
+    n_vertices: 50
     path_dataset: dataset_tsp #TSP #dataset_tsp # Path where datasets are stored
 
 train: # Training parameters
@@ -16,8 +16,9 @@ train: # Training parameters
     batch_size: 1
     lr: !!float 1e-3
     scheduler_step: 10
+    scheduler_factor: 0.5
     scheduler_decay: 0.9
-    print_freq: 64
+    print_freq: 10
 
 arch: # Architecture and model
     arch: Simple_Edge_Embedding 
@@ -30,5 +31,5 @@ arch: # Architecture and model
 
 observers:
     neptune:
-        enable: Yes
+        enable: No
         project: mautrib/TSP

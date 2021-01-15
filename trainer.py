@@ -112,28 +112,23 @@ def train_tsp(train_loader,model,criterion,optimizer,
         
         raw_scores = model(input).squeeze(-1)
 
-        
-        results = metrics.compute_accuracy_tsp(raw_scores,target,device=device)
-        #print(results)
-        n_true += torch.sum( results.to(torch.int64) )
-        n_total = (i+1)*batch_size
-        curr_acc = float(n_true/n_total)
-        logger.update_meter('train','acc_true',curr_acc)
+        _, rec_conservatif, _ = eval_score(raw_scores,target,device,topk=2)
+        logger.update_meter('train','acc_true',rec_conservatif)
 
         #print(f"Raw score shape : {raw_scores}")
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
         loss = criterion(raw_scores,target) 
         logger.update_meter('train', 'loss', loss.data.item(), n=1)
-        #optimizer.zero_grad()
+        optimizer.zero_grad()
         loss.backward()
-        #optimizer.step()
+        optimizer.step()
         # measure elapsed time
         logger.update_meter('train', 'batch_time', time.time() - end, n=batch_size)
         end = time.time()   
         if i % print_freq == 0:
             #print(f"RS : {raw_scores}\n\n SOL    : {target}")
-            optimizer.step()
-            optimizer.zero_grad()
+            #optimizer.step()
+            #optimizer.zero_grad()
             if eval_score is not None:
                 #print(np_out.shape)
                 prec, rec, f1 = eval_score(raw_scores,target,device) #Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
@@ -149,11 +144,11 @@ def train_tsp(train_loader,model,criterion,optimizer,
                   'Loss {loss.avg:.4f} ({loss.val:.4f})\t'
                   'F1 {f1.avg:.3f} ({f1.val:.3f})\t'
                   'Recall {rec.avg:.3f} ({rec.val:.3f})\t'
-                  'Acc {curr_acc:.3f}'.format(
+                  'Acc {acc.avg:.3f} ({acc.val:.3f})'.format(
                    epoch, i, len(train_loader), batch_time=logger.get_meter('train', 'batch_time'),
                    data_time=logger.get_meter('train', 'data_time'), lr=learning_rate,
                    loss=logger.get_meter('train', 'loss'), f1=logger.get_meter('train', 'f1'),
-                   rec=logger.get_meter('train','recall'), curr_acc=curr_acc))
+                   rec=logger.get_meter('train','recall'), acc=logger.get_meter('train','acc_true')))
 
     logger.log_meters('train', n=epoch)
     logger.log_meters('hyperparams', n=epoch)

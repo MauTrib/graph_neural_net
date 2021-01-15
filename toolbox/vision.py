@@ -1,7 +1,8 @@
 import networkx
 import matplotlib.pyplot as plt
+import os
 
-def compare(xs,ys,adj_out,adj_target,save_out=True):
+def compare(xs,ys,adj_out,adj_target,save_out=True,path='pics/',name='graph'):
     N = len(xs)
     pos = {i: (xs[i], ys[i]) for i in range(N)}
     g = networkx.random_geometric_graph(N,0,pos=pos)
@@ -22,7 +23,8 @@ def compare(xs,ys,adj_out,adj_target,save_out=True):
     networkx.draw(g,pos,edge_color = colors)
     plt.tight_layout()
     plt.show()
-    plt.savefig("Graph_comparison.png", format="PNG")
+    fname = os.path.join(path,name)
+    plt.savefig(fname+".png", format="PNG")
     
     if save_out:
         plt.figure()
@@ -31,4 +33,5 @@ def compare(xs,ys,adj_out,adj_target,save_out=True):
         networkx.draw(g_out,pos,edge_color = colors)
         plt.tight_layout()
         plt.show()
-        plt.savefig("Graph_comparison_out.png", format="PNG")
+        fname = os.path.join(path,name)
+        plt.savefig(fname+"_out.png", format="PNG")
