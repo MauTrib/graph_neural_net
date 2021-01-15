@@ -148,12 +148,12 @@ def main(cpu, train_data, train, arch):
         loss = trainer.train_tsp(train_loader,model,criterion,optimizer,
         exp_logger,device,epoch,eval_score=metrics.compute_f1,
         print_freq=train['print_freq'])
-        scheduler.step(loss)
+        #scheduler.step(loss)
         
         f1, loss = trainer.val_tsp(val_loader,model,criterion,
         exp_logger,device,epoch,eval_score=metrics.compute_f1)
         #print_freq=train['print_freq'])
-        #scheduler.step(loss)
+        scheduler.step(loss)
         # remember best acc and save checkpoint
         is_best = (f1 > best_score)
         best_score = max(f1, best_score)

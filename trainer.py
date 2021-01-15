@@ -112,8 +112,7 @@ def train_tsp(train_loader,model,criterion,optimizer,
         
         raw_scores = model(input).squeeze(-1)
 
-        _, rec_conservatif, _ = eval_score(raw_scores,target,device,topk=2)
-        logger.update_meter('train','acc_true',rec_conservatif)
+
 
         #print(f"Raw score shape : {raw_scores}")
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
@@ -132,11 +131,13 @@ def train_tsp(train_loader,model,criterion,optimizer,
             if eval_score is not None:
                 #print(np_out.shape)
                 prec, rec, f1 = eval_score(raw_scores,target,device) #Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
+                _, rec_conservatif, _ = eval_score(raw_scores,target,device,topk=2)
 
 
                 #print(acc_max, n, bs)
                 logger.update_meter('train', 'f1', f1)
                 logger.update_meter('train', 'recall', rec)
+                logger.update_meter('train','acc_true',rec_conservatif)
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
