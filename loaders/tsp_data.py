@@ -73,7 +73,7 @@ class TSP(Dataset):
             tour_nodes = [int(node) - 1 for node in line[line.index('output') + 1:-1]][:-1]
 
             # Compute an edge adjacency matrix representation of tour
-            edges_target = np.eye(num_nodes)
+            edges_target = np.zeros((num_nodes,num_nodes)) #edges_target = np.eye(num_nodes)
             for idx in range(len(tour_nodes) - 1):
                 i = tour_nodes[idx]
                 j = tour_nodes[idx + 1]
