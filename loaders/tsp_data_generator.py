@@ -155,7 +155,7 @@ class TSPGenerator(Base_Generator):
         xs = [g.nodes[node]['pos'][0] for node in g.nodes]
         ys = [g.nodes[node]['pos'][1] for node in g.nodes]
 
-        problem = TSPSolver.from_data(xs,ys,self.distance)
+        problem = TSPSolver.from_data([1e8*elt for elt in xs,[1e8*elt for elt in ys],self.distance) #1e8 because Concorde truncates the distance to the nearest integer
         solution = problem.solve(verbose=False)
         assert solution.success, "Couldn't find solution!"
 
