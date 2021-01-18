@@ -3,22 +3,34 @@ name: TSP-50-cont
 cpu: Yes
 root_dir: .
 
-train_data: # Data related parameters
-    num_examples_train: 10
-    num_examples_val: 10
-    generative_model: GaussNormal
-    distance_used: EUC_2D
-    n_vertices: 50
-    path_dataset: dataset_tsp #TSP #dataset_tsp # Path where datasets are stored
+data:
+
+    train_data: # Train/Val related parameters
+        num_examples_train: 10
+        num_examples_val: 10
+        generative_model: Square01
+        distance_used: EUC_2D
+        path_dataset: dataset_tsp #TSP #dataset_tsp # Path where datasets are stored
+        n_vertices: 50
+
+    test_data:
+        enable: Yes
+        num_examples_test: 10
+        generative_model: Square01
+        distance_used: EUC_2D
+        path_dataset: dataset_tsp
+        n_vertices: 50
+        batch_size: 1
+
 
 train: # Training parameters
     epoch: 100
     batch_size: 1
     lr: !!float 1e-3
-    scheduler_step: 10
-    scheduler_factor: 0.5
+    scheduler_step: 1
+    scheduler_factor: 0.9
     scheduler_decay: 0.9
-    print_freq: 10
+    print_freq: 100
 
 arch: # Architecture and model
     arch: Simple_Edge_Embedding 
@@ -31,5 +43,5 @@ arch: # Architecture and model
 
 observers:
     neptune:
-        enable: No
+        enable: Yes
         project: mautrib/TSP

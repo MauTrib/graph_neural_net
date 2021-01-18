@@ -30,11 +30,11 @@ def set_experiment_name(config, command_name, logger):
 @ex.config_hook
 def update_config(config, command_name, logger):
     config.update(log_dir='{}/runs/{}/TSP_{}_{}_{}_{}_{}_{}/'.format(
-        config['root_dir'], config['name'], config['arch']['arch'], config['train_data']['n_vertices'],
+        config['root_dir'], config['name'], config['arch']['arch'], config['data']['train_data']['n_vertices'],
         config['arch']['num_blocks'],config['arch']['in_features'],
         config['arch']['out_features'], config['arch']['depth_of_mlp']),
                    # Some funcs need path_dataset while not requiring the whole data dict
-                   path_dataset=config['train_data']['path_dataset'])
+                   path_dataset=config['data']['train_data']['path_dataset'])
                    #res_dir='{}/runs/{}/res'.format(config['root_dir'], config['name'])
     return config
 
@@ -62,7 +62,7 @@ def init_logger(name, _config, _run):
     exp_logger = logger.Experiment(name, _config, run=_run)
     exp_logger.add_meters('train', metrics.make_meter_tsp())
     exp_logger.add_meters('val', metrics.make_meter_tsp())
-    #exp_logger.add_meters('test', metrics.make_meter_matdching())
+    exp_logger.add_meters('test', metrics.make_meter_tsp())
     exp_logger.add_meters('hyperparams', {'learning_rate': metrics.ValueMeter()})
     return exp_logger
  
@@ -102,7 +102,7 @@ def save_checkpoint(state, is_best, log_dir, filename='checkpoint.pth.tar'):
 
 
 @ex.automain
-def main(cpu, train_data, train, arch):
+def main(cpu, data, train, arch):
     """ Main func.
     """
     global best_score, best_epoch
@@ -113,6 +113,10 @@ def main(cpu, train_data, train, arch):
 
     # init random seeds 
     setup_env()
+
+    train_data = data['train_data']
+    test_enabled = data['test_data']['enable']
+    
 
     init_output_env()
     exp_logger = init_logger()
@@ -127,6 +131,12 @@ def main(cpu, train_data, train, arch):
     dataset_val = TSPGenerator('val',train_data)
     dataset_val.load_dataset()
     val_loader = siamese_loader(dataset_val,train['batch_size'],constant_n_vertices=True)
+
+    if test_enabled:
+        test_data = data['test_data']
+        dataset_test = TSPGenerator('test',test_data)
+        dataset_test.load_dataset()
+        test_loader = siamese_loader(dataset_test,test_data['batch_size'],constant_n_vertices=True)
     
     model = get_model(arch)
     model_path = './runs/TSP-50-cont/TSP_Simple_Edge_Embedding_50_4_64_1_3'
@@ -168,3 +178,6 @@ def main(cpu, train_data, train, arch):
             'best_epoch': best_epoch,
             'exp_logger': exp_logger,
             }, is_best)
+
+    if test_enabled:
+        trainer.val_tsp(test_loader,model,criterion,exp_logger,device,0,eval_score=metrics.compute_f1,val_test='test')

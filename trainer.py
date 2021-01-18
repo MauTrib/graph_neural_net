@@ -96,9 +96,7 @@ def train_tsp(train_loader,model,criterion,optimizer,
     learning_rate = optimizer.param_groups[0]['lr']
     logger.update_value_meter('hyperparams', 'learning_rate', learning_rate)
     end = time.time()
-
-    n_true = 0 #Number of true paths found
-
+    
     for i, (input, target,_) in enumerate(train_loader):
 
         batch_size = input.shape[0]
@@ -191,7 +189,7 @@ def val_tsp(val_loader,model,criterion,
             else:
                 print('Test set, epoch: [{0}][{1}/{2}]\t'
                     'Loss {loss.avg:.4f} ({loss.val:.4f})\t'
-                    'F1 {acc.avg:.3f} ({acc.val:.3f})\t'
+                    'F1 {f1.avg:.3f} ({f1.val:.3f})\t'
                     'Rec {rec.avg:.3f} ({rec.val:.3f})'.format(
                     epoch, i, len(val_loader), loss=logger.get_meter(val_test, 'loss'),
                     f1=current_f1, rec=logger.get_meter(val_test,'recall')))
