@@ -126,7 +126,7 @@ class TSPGenerator(Base_Generator):
     """
     Build a numpy dataset of pairs of (Graph, noisy Graph)
     """
-    def __init__(self, name, args):
+    def __init__(self, name, args, coeff=1e8):
         self.generative_model = args['generative_model']
         self.distance = args['distance_used']
         num_examples = args['num_examples_' + name]
@@ -142,6 +142,8 @@ class TSPGenerator(Base_Generator):
         
         
         check_dir(self.path_dataset)#utils.check_dir(self.path_dataset)
+        
+        self.coeff = coeff
 
     def compute_example(self):
         """
@@ -155,7 +157,7 @@ class TSPGenerator(Base_Generator):
         xs = [g.nodes[node]['pos'][0] for node in g.nodes]
         ys = [g.nodes[node]['pos'][1] for node in g.nodes]
 
-        problem = TSPSolver.from_data([1e8*elt for elt in xs],[1e8*elt for elt in ys],self.distance) #1e8 because Concorde truncates the distance to the nearest integer
+        problem = TSPSolver.from_data([self.coeff*elt for elt in xs],[self.coeff*elt for elt in ys],self.distance) #1e8 because Concorde truncates the distance to the nearest integer
         solution = problem.solve(verbose=False)
         assert solution.success, "Couldn't find solution!"
 
@@ -175,8 +177,8 @@ class TSPGenerator(Base_Generator):
     
 if __name__=="__main__":
     name="train"
-    args = {'generative_model': "GaussNormal",'num_examples_train':1,'n_vertices':5,'distance_used':'EUC_2D', 'path_dataset':"dataset_tsp"}
-    tspg = TSPGenerator(name,args)
+    args = {'generative_model': "GaussNormal",'num_examples_train':100,'n_vertices':50,'distance_used':'EUC_2D', 'path_dataset':"dataset_tsp"}
+    tspg = TSPGenerator(name,args,coeff=1e7)
     time_taken = timeit.timeit(tspg.load_dataset,number=1)
     print(f"Took : {time_taken}s => {args['num_examples_train']/time_taken} TSPs per second")
     

@@ -128,14 +128,14 @@ def train_tsp(train_loader,model,criterion,optimizer,
             #optimizer.zero_grad()
             if eval_score is not None:
                 #print(np_out.shape)
-                prec, rec, f1 = eval_score(raw_scores,target,device) #Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
-                _, rec_conservatif, _ = eval_score(raw_scores,target,device,topk=2)
+                _, rec, f1 = eval_score(raw_scores,target,device) #Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
+                _, _, acc = eval_score(raw_scores,target,device,topk=2) #In the case topk=2, precision=recall=f1=accuracy, because we have 2 relevant elements
 
 
                 #print(acc_max, n, bs)
                 logger.update_meter('train', 'f1', f1)
                 logger.update_meter('train', 'recall', rec)
-                logger.update_meter('train','acc_true',rec_conservatif)
+                logger.update_meter('train','acc_true',acc)
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
@@ -170,12 +170,15 @@ def val_tsp(val_loader,model,criterion,
             raw_scores = model(input).squeeze(-1)
         #raw_scores = torch.matmul(output,torch.transpose(output, 1, 2))
         loss = criterion(raw_scores,target) #Was loss = criterion(raw_scores,mask,target)
-        logger.update_meter('val', 'loss', loss.data.item(), n=1)
+        logger.update_meter(val_test, 'loss', loss.data.item(), n=1)
+            
     
         if eval_score is not None:
-            prec, rec, f1 = eval_score(raw_scores,target,device) # Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
+            _, rec, f1 = eval_score(raw_scores,target,device,topk=3)
+            _, _,acc = eval_score(raw_scores,target,device,topk=2) # Was prec, rec, f1 = eval_score(raw_scores*mask,target,device)
             logger.update_meter(val_test, 'f1', f1)
             logger.update_meter(val_test, 'recall',rec)
+            logger.update_meter(val_test,'acc_true',acc)
         if i % print_freq == 0:
             current_f1 = logger.get_meter(val_test, 'f1')
             los = logger.get_meter(val_test, 'loss')
@@ -183,16 +186,20 @@ def val_tsp(val_loader,model,criterion,
                 print('Validation set, epoch: [{0}][{1}/{2}]\t'
                     'Loss {loss.avg:.4f} ({loss.val:.4f})\t'
                     'F1 {f1.avg:.3f} ({f1.val:.3f})\t'
-                    'Rec {rec.avg:.3f} ({rec.val:.3f})'.format(
+                    'Rec {rec.avg:.3f} ({rec.val:.3f})\t'
+                    'Acc {acc.avg:.3f} ({acc.val:.3f})'.format(
                     epoch, i, len(val_loader), loss=logger.get_meter(val_test, 'loss'),
-                    f1=current_f1, rec = logger.get_meter(val_test,'recall')))
+                    f1=current_f1, rec = logger.get_meter(val_test,'recall'),
+                    acc = logger.get_meter(val_test,'acc_true')))
             else:
                 print('Test set, epoch: [{0}][{1}/{2}]\t'
                     'Loss {loss.avg:.4f} ({loss.val:.4f})\t'
                     'F1 {f1.avg:.3f} ({f1.val:.3f})\t'
-                    'Rec {rec.avg:.3f} ({rec.val:.3f})'.format(
+                    'Rec {rec.avg:.3f} ({rec.val:.3f})\t'
+                    'Acc {acc.avg:.3f} ({acc.val:.3f})'.format(
                     epoch, i, len(val_loader), loss=logger.get_meter(val_test, 'loss'),
-                    f1=current_f1, rec=logger.get_meter(val_test,'recall')))
+                    f1=current_f1, rec=logger.get_meter(val_test,'recall'),
+                    acc = logger.get_meter(val_test,'acc_true')))
 
     logger.log_meters(val_test, n=epoch)
     return current_f1.avg, los.avg

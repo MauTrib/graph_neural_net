@@ -121,20 +121,27 @@ def main(cpu, data, train, arch):
     init_output_env()
     exp_logger = init_logger()
     
+    coeff = 1e8
+    if train_data['generative_model']=="GaussNormal" or train_data['n_vertices']>50: #Coeff correction to prevent oveflow in Concorde Solver
+        coeff = 1e7
+    
     #dataset_train = TSP('dataset_tsp',split='train')
     #dataset_train = TSP('TSP',file_name='tsp50-500_' ,split='train')
-    dataset_train = TSPGenerator('train',train_data)
+    dataset_train = TSPGenerator('train',train_data,coeff=coeff)
     dataset_train.load_dataset()
     train_loader = siamese_loader(dataset_train,train['batch_size'],constant_n_vertices=True)
     #dataset_val = TSP('dataset_tsp',split='val')
     #dataset_val = TSP('TSP',file_name='tsp50-500_' ,split='val')
-    dataset_val = TSPGenerator('val',train_data)
+    dataset_val = TSPGenerator('val',train_data,coeff=coeff)
     dataset_val.load_dataset()
     val_loader = siamese_loader(dataset_val,train['batch_size'],constant_n_vertices=True)
 
     if test_enabled:
         test_data = data['test_data']
-        dataset_test = TSPGenerator('test',test_data)
+        coeff = 1e8
+        if test_data['generative_model']=="GaussNormal" or test_data['n_vertices']>50:
+            coeff = 1e7
+        dataset_test = TSPGenerator('test',test_data,coeff=coeff)
         dataset_test.load_dataset()
         test_loader = siamese_loader(dataset_test,test_data['batch_size'],constant_n_vertices=True)
     
