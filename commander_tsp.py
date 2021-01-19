@@ -134,7 +134,10 @@ def main(cpu, data, train, arch):
 
     if test_enabled:
         test_data = data['test_data']
-        dataset_test = TSPGenerator('test',test_data)
+        coeff = 1e8
+        if test_data['generative_model']=="GaussNormal" or test_data['n_vertices']>50:
+            coeff = 1e7
+        dataset_test = TSPGenerator('test',test_data,coeff=coeff)
         dataset_test.load_dataset()
         test_loader = siamese_loader(dataset_test,test_data['batch_size'],constant_n_vertices=True)
     

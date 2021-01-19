@@ -1,13 +1,13 @@
 ---
 name: TSP-50-cont
-cpu: Yes
+cpu: No
 root_dir: .
 
 data:
 
     train_data: # Train/Val related parameters
-        num_examples_train: 10
-        num_examples_val: 10
+        num_examples_train: 20000
+        num_examples_val: 1000
         generative_model: Square01
         distance_used: EUC_2D
         path_dataset: dataset_tsp #TSP #dataset_tsp # Path where datasets are stored
@@ -15,17 +15,17 @@ data:
 
     test_data:
         enable: Yes
-        num_examples_test: 10
-        generative_model: Square01
+        num_examples_test: 1000
+        generative_model: GaussNormal
         distance_used: EUC_2D
         path_dataset: dataset_tsp
         n_vertices: 50
-        batch_size: 1
+        batch_size: 64
 
 
 train: # Training parameters
     epoch: 100
-    batch_size: 1
+    batch_size: 64
     lr: !!float 1e-3
     scheduler_step: 1
     scheduler_factor: 0.9
