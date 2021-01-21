@@ -13,15 +13,15 @@ def compare(xs,ys,adj_out,adj_target,save_out=True,path='pics/',name='graph'):
                 g.add_edge(i,j,color="black")
                 g_out.add_edge(i,j,color="black")
             elif adj_out[i,j]:
-                g.add_edge(i,j,color="red")
-                g_out.add_edge(i,j,color="red")
-            elif adj_target[i,j]:
                 g.add_edge(i,j,color="blue")
+                g_out.add_edge(i,j,color="blue")
+            elif adj_target[i,j]:
+                g.add_edge(i,j,color="red")
     
     edges = g.edges()
     colors = [g[u][v]['color'] for u,v in edges]
     plt.figure()
-    networkx.draw(g,pos,edge_color = colors)
+    networkx.draw(g,pos,edge_color = colors,node_size=100)
     plt.tight_layout()
     plt.show()
     fname = os.path.join(path,name)
@@ -31,7 +31,7 @@ def compare(xs,ys,adj_out,adj_target,save_out=True,path='pics/',name='graph'):
         plt.figure()
         edges = g_out.edges()
         colors = [g_out[u][v]['color'] for u,v in edges]
-        networkx.draw(g_out,pos,edge_color = colors)
+        networkx.draw(g_out,pos,edge_color = colors,node_size=100)
         plt.tight_layout()
         plt.show()
         fname = os.path.join(path,name)

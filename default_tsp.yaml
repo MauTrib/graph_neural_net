@@ -16,7 +16,7 @@ data:
     test_data:
         enable: Yes
         num_examples_test: 1000
-        generative_model: GaussNormal
+        generative_model: Square01
         distance_used: EUC_2D
         path_dataset: dataset_tsp
         n_vertices: 50
@@ -25,7 +25,7 @@ data:
 
 train: # Training parameters
     epoch: 100
-    batch_size: 64
+    batch_size: 16
     lr: !!float 1e-3
     scheduler_step: 1
     scheduler_factor: 0.9

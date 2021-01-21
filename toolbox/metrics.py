@@ -165,6 +165,17 @@ def compute_f1(raw_scores,target,device,topk=3):
     y_onehot.scatter_(2, ind, 1)
     return f1_score(y_onehot,target,device=device)
 
+def compute_f1_2passes(raw_scores,target,device,topk=2):
+    _, ind_h = torch.topk(raw_scores, topk, dim =2)
+    _, ind_v = torch.topk(raw_scores, topk, dim =1)
+    y_onehot_h = torch.zeros_like(raw_scores).to(device)
+    y_onehot_h.scatter_(2, ind_h, 1)
+    y_onehot_v = torch.zeros_like(raw_scores).to(device)
+    y_onehot_v.scatter_(2, ind_v, 1)
+    y_onehot = torch.zeros_like(raw_scores).to(device)
+    y_onehot = torch.sign(y_onehot_h + y_onehot_v)
+    return f1_score(y_onehot,target,device=device)
+
 def get_path(raw_scores,device='cpu',topk=2):
     _, ind = torch.topk(raw_scores, topk, dim =2)
     ind = ind.to(device)
@@ -176,3 +187,14 @@ def compute_accuracy_tsp(raw_scores,target,device='cpu'):
     y_onehot = get_path(raw_scores,device=device)
     return torch.all(y_onehot==target,dim=1).all(dim=1)
 
+def get_2nn_path(input_data,dtype=torch.long):
+    n_vertices = input_data[0].shape[0]
+    knn_path = torch.zeros((1,n_vertices,n_vertices),dtype=dtype)
+    #print(torch.argsort(data[0,0,:,-1]))
+    for i in range(n_vertices):
+        distances = input_data[0,i,:,-1]
+        argsorted = torch.argsort(distances)
+        c1,c2 = argsorted[1],argsorted[2]
+        knn_path[0,i,c1] = 1
+        knn_path[0,i,c2] = 1
+    return knn_path
