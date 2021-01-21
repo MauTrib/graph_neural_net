@@ -26,6 +26,7 @@ def compare(xs,ys,adj_out,adj_target,save_out=True,path='pics/',name='graph'):
     plt.show()
     fname = os.path.join(path,name)
     plt.savefig(fname+".png", format="PNG")
+    plt.close()
     
     if save_out:
         plt.figure()
@@ -36,6 +37,7 @@ def compare(xs,ys,adj_out,adj_target,save_out=True,path='pics/',name='graph'):
         plt.show()
         fname = os.path.join(path,name)
         plt.savefig(fname+"_out.png", format="PNG")
+        plt.close()
 
 def show_tour(xs,ys,adj,path='pics/',name='graph'):
     N = len(xs)
@@ -53,3 +55,4 @@ def show_tour(xs,ys,adj,path='pics/',name='graph'):
     plt.show()
     fname = os.path.join(path,name)
     plt.savefig(fname+".png", format="PNG")
+    plt.close()

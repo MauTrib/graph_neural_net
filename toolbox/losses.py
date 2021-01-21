@@ -46,3 +46,34 @@ class tsp_loss(nn.Module):
         proba = self.normalize(raw_scores)
         loss = self.loss(proba,target)
         return torch.mean(loss) # Was return torch.mean(mask*self.loss(proba,target))
+
+class tsp_fiedler_loss(nn.Module):
+    def __init__(self, fiedler_coeff = 1e-2, loss=nn.BCELoss(reduction='none')):
+        super(tsp_fiedler_loss, self).__init__()
+        self.base_loss = loss
+        self.normalize = torch.nn.Sigmoid()#Softmax(dim=2)
+        self.fiedler_coeff = fiedler_coeff
+        
+    def forward(self, raw_scores, target):
+        """
+        raw_scores (bs,n_vertices,n_vertices)
+        """
+        n_vertices = raw_scores.shape[1]
+        proba = self.normalize(raw_scores)
+        base_loss = self.base_loss(proba,target)
+
+        device = 'cpu'
+        if raw_scores.is_cuda:
+            device = raw_scores.get_device()
+        
+        _,ind = torch.topk(raw_scores,k=2,dim=2)
+        y_onehot = torch.zeros_like(raw_scores).to(device)
+        y_onehot.scatter_(2, ind, 1)
+        temp = torch.sign(raw_scores*y_onehot)
+        degrees = temp.sum(axis=2)
+        degrees = torch.diag_embed(degrees)
+        lap = degrees - temp
+        eigvals, _ = torch.symeig(lap,eigenvectors=True)
+
+        return torch.mean(base_loss + self.fiedler_coeff/n_vertices * eigvals[-2]) # Was return torch.mean(mask*self.loss(proba,target))
+ 
