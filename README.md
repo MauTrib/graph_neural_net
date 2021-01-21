@@ -1,4 +1,4 @@
-# Graph neural networks for the Quadratic Assignment Problem
+# Graph neural networks for the Travelling Salesman Problem
 
 ## Overview
 ### Project structure
@@ -7,9 +7,8 @@
 .
 ├── loaders
 |   └── dataset selector
-|   └── data_generator.py # generating random graphs
-|   └── test_data_generator.py
-|   └── siamese_loader.py # loading pairs 
+|   └── siamese_loader.py # loading pairs
+|   └── tsp_data_generator #Create and Load the graphs and their solutions
 ├── models
 |   └── architecture selector
 |   └── layers.py # equivariant block
@@ -21,11 +20,11 @@
 |   └── metrics.py # computing scores
 |   └── losses.py  # computing losses
 |   └── optimizer.py # optimizers
+|   └── decoding.py #Transforming edge probability in tours
 |   └── utility.py
 |   └── maskedtensor.py # Tensor-like class to handle batches of graphs of different sizes
-├── commander.py # main file from the project serving for calling all necessary functions for training and testing
+├── commander_tsp.py # main file from the project serving for calling all necessary functions for training and testing
 ├── trainer.py # pipelines for training and validation
-├── eval.py # testing models
 ```
 
 
@@ -34,34 +33,22 @@ Dependencies are listed in `requirements.txt`. To install, run
 ```
 pip install -r requirements.txt
 ```
+To create datasets, it is required to install [pyconcorde](https://github.com/jvkersch/pyconcorde).
 ## Training 
-Run the main file ```commander.py``` with the command ```train```
+Run the main file ```commander_tsp.py```
 ```
-python train commander.py
+python commander_tsp.py
 ```
-To change options, use [Sacred](https://github.com/IDSIA/sacred) command-line interface and see ```default.yaml``` for the configuration structure. For instance,
+To change options, use [Sacred](https://github.com/IDSIA/sacred) command-line interface and see ```default_tsp.yaml``` for the configuration structure. For instance,
 ```
-python commander.py train with cpu=No data.generative_model=Regular train.epoch=10 
+python commander_tsp.py with cpu=No data.generative_model=Square01 train.epoch=10 
 ```
-You can also copy ```default.yaml``` and modify the configuration parameters there. Loading the configuration in ```other.yaml``` (or ```other.json```) can be done with
+You can also copy ```default_tsp.yaml``` and modify the configuration parameters there. Loading the configuration in ```other.yaml``` (or ```other.json```) can be done with
 ```
-python commander.py train with other.yaml
+python commander_tsp.py with other.yaml
 ```
 See [Sacred documentation](http://sacred.readthedocs.org/) for an exhaustive reference. 
 
 To save logs to [Neptune](https://neptune.ai/), you need to provide your own API key via the dedicated environment variable.
 
 The model is regularly saved in the folder `runs`.
-
-## Evaluating
-
-There are two ways of evaluating the models. If you juste ran the training with a configuration ```conf.yaml```, you can simply do,
-```
-python commander.py eval with conf.yaml
-```
-You can omit ```with conf.yaml``` if you are using the default configuartion.
-
-If you downloaded a model with a config file from here, you can edit the section ```test_data``` of this config if you wish and then run,
-```
-python commander.py eval with /path/to/config model_path=/path/to/model.pth.tar
-```
