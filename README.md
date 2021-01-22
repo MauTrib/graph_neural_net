@@ -1,5 +1,7 @@
 # Graph neural networks for the Travelling Salesman Problem
 
+Deep Learning project for the ENS course. Repository forked from https://github.com/mlelarge/graph_neural_net from Waiss Azizian and Marc Lelarge.
+
 ## Overview
 ### Project structure
 
