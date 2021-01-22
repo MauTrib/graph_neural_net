@@ -74,6 +74,8 @@ class tsp_fiedler_loss(nn.Module):
         degrees = torch.diag_embed(degrees)
         lap = degrees - temp
         eigvals, _ = torch.symeig(lap,eigenvectors=True)
+        
+        base_loss_flattened = torch.mean(torch.mean(base_loss,dim=-1),dim=-1) #base_loss_flattened.shape = batch_size
 
-        return torch.mean(base_loss + self.fiedler_coeff/n_vertices * eigvals[-2]) # Was return torch.mean(mask*self.loss(proba,target))
+        return torch.mean(base_loss_flattened - self.fiedler_coeff/n_vertices * eigvals[:,-2]) # Was return torch.mean(mask*self.loss(proba,target))
  
