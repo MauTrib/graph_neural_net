@@ -50,7 +50,7 @@ def show_tour(xs,ys,adj,path='pics/',name='graph'):
     edges = g.edges()
     colors = [g[u][v]['color'] for u,v in edges]
     plt.figure()
-    networkx.draw(g,pos,edge_color = colors)
+    networkx.draw(g,pos,edge_color = colors,node_size=50)
     plt.tight_layout()
     plt.show()
     fname = os.path.join(path,name)

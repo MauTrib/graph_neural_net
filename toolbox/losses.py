@@ -48,17 +48,36 @@ class tsp_loss(nn.Module):
         return torch.mean(loss) # Was return torch.mean(mask*self.loss(proba,target))
 
 class tsp_fiedler_loss(nn.Module):
-    def __init__(self, fiedler_coeff = 1e-2, loss=nn.BCELoss(reduction='none')):
+    def __init__(self, fiedler_coeff = 1e-2, n_vertices=None, loss=nn.BCELoss(reduction='none')):
         super(tsp_fiedler_loss, self).__init__()
         self.base_loss = loss
         self.normalize = torch.nn.Sigmoid()#Softmax(dim=2)
         self.fiedler_coeff = fiedler_coeff
+        self.n_vertices = -1
+        self.fiedler_opti = 0
+        if n_vertices is not None:
+            self._fiedler_init(n_vertices)
+    
+    def _fiedler_compute(self,n_vertices):
+        if n_vertices!=self.n_vertices:
+            assert n_vertices>=3, "n_vertices smaller than 3 !"
+            self.n_vertices = n_vertices
+            M = 2*torch.eye(self.n_vertices)
+            temp_id = -1*torch.eye(self.n_vertices)
+            M += torch.roll(temp_id,1,dims=-2)
+            M += torch.roll(temp_id,-1,dims=-2)
+            eigvals,_ = torch.symeig(M)
+            self.fiedler_opti = eigvals[1]
+            print(f"Fiedler value changed to {self.fiedler_opti}")
+
         
     def forward(self, raw_scores, target):
         """
         raw_scores (bs,n_vertices,n_vertices)
         """
         n_vertices = raw_scores.shape[1]
+        self._fiedler_compute(n_vertices)
+
         proba = self.normalize(raw_scores)
         base_loss = self.base_loss(proba,target)
 
@@ -69,13 +88,17 @@ class tsp_fiedler_loss(nn.Module):
         _,ind = torch.topk(raw_scores,k=2,dim=2)
         y_onehot = torch.zeros_like(raw_scores).to(device)
         y_onehot.scatter_(2, ind, 1)
-        temp = torch.sign(raw_scores*y_onehot)
-        degrees = temp.sum(axis=2)
+        y_onehot = torch.sign(y_onehot * y_onehot.transpose(-2,-1)) #Symmetrization of the matrix
+        degrees = y_onehot.sum(axis=2)
         degrees = torch.diag_embed(degrees)
-        lap = degrees - temp
+        lap = degrees - y_onehot
         eigvals, _ = torch.symeig(lap,eigenvectors=True)
+        fiedler_val = eigvals[:,1]
         
         base_loss_flattened = torch.mean(torch.mean(base_loss,dim=-1),dim=-1) #base_loss_flattened.shape = batch_size
 
-        return torch.mean(base_loss_flattened - self.fiedler_coeff/n_vertices * eigvals[:,-2]) # Was return torch.mean(mask*self.loss(proba,target))
+        fiedler_loss_fn = torch.nn.MSELoss()
+        fiedler_loss = fiedler_loss_fn(fiedler_val,self.fiedler_opti)
+
+        return torch.mean(base_loss_flattened + self.fiedler_coeff * fiedler_loss) # Was return torch.mean(mask*self.loss(proba,target))
  

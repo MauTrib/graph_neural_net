@@ -11,7 +11,7 @@ from loaders.siamese_loaders import siamese_loader
 from loaders.tsp_data import TSP
 from loaders.tsp_data_generator import TSPGenerator
 from toolbox.optimizer import get_optimizer
-from toolbox.losses import tsp_loss
+from toolbox.losses import tsp_loss,tsp_fiedler_loss
 from toolbox import utils
 import trainer as trainer
 
@@ -151,7 +151,7 @@ def main(cpu, data, train, arch):
     #checkpoint = torch.load(model_file)
     #model.load_state_dict(checkpoint['state_dict'])
     optimizer, scheduler = get_optimizer(train,model)
-    criterion = tsp_loss()
+    criterion = tsp_fiedler_loss(fiedler_coeff=0)
 
     # exp_logger = init_logger(args)
 

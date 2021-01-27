@@ -198,3 +198,18 @@ def get_2nn_path(input_data,dtype=torch.long):
         knn_path[0,i,c1] = 1
         knn_path[0,i,c2] = 1
     return knn_path
+
+
+def compute_fiedler(raw_scores,device='cpu'):
+    _,ind = torch.topk(raw_scores,k=2,dim=2)
+    y_onehot = torch.zeros_like(raw_scores).to(device)
+    y_onehot.scatter_(2, ind, 1)
+    y_onehot = torch.sign(y_onehot + y_onehot.transpose(-2,-1))
+    #print(y_onehot)
+    degrees = y_onehot.sum(axis=2)
+    degrees = torch.diag_embed(degrees)
+    lap = degrees - y_onehot
+    #print(lap)
+    eigvals, _ = torch.symeig(lap,eigenvectors=True)
+    #print(eigvals)
+    return eigvals[:,1]

@@ -1,6 +1,7 @@
 from toolbox import metrics
 import time
 import torch
+from toolbox.vision import compare
 
 def train_triplet(train_loader,model,criterion,optimizer,
                 logger,device,epoch,eval_score=None,print_freq=100):
@@ -160,7 +161,7 @@ def val_tsp(val_loader,model,criterion,
     model.eval()
     logger.reset_meters(val_test)
 
-    for i, (input, target,_) in enumerate(val_loader): #Was for i, (input, target, mask) in enumerate(val_loader):
+    for i, (input, target,(xs,ys)) in enumerate(val_loader): #Was for i, (input, target, mask) in enumerate(val_loader):
         input = input.to(device)
         target = target.to(device)
         target = target.type(torch.float32)
@@ -200,6 +201,10 @@ def val_tsp(val_loader,model,criterion,
                     epoch, i, len(val_loader), loss=logger.get_meter(val_test, 'loss'),
                     f1=current_f1, rec=logger.get_meter(val_test,'recall'),
                     acc = logger.get_meter(val_test,'acc_true')))
+        
+        if i<=10 and val_test=='test':
+            adj = metrics.get_path(raw_scores,device=device,topk=2)
+            compare(xs,ys,adj,target,path = 'pics/fiedler_test/',name='graph{i}_f0.png')
 
     logger.log_meters(val_test, n=epoch)
     return current_f1.avg, los.avg
