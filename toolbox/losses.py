@@ -47,6 +47,47 @@ class tsp_loss(nn.Module):
         loss = self.loss(proba,target)
         return torch.mean(loss) # Was return torch.mean(mask*self.loss(proba,target))
 
+class Perm_Penal(nn.Module):
+    def __init__(self,coeff = 1):
+        super(Perm_Penal,self).__init__()
+        self.coeff = coeff
+    
+    def forward(self,m):
+        """
+        Matrix of size (bs,n_vertices,n_vertices)
+        """
+        n_vertices = m.shape[-1]
+        m_abs = torch.abs(m)
+        loss_i = torch.sum( (m_abs.sum(keepdims=True,dim=-1) - torch.sqrt( (m**2).sum(keepdims=True,dim=-1) )) )
+        loss_j = torch.sum( (m_abs.sum(keepdims=True,dim=-2) - torch.sqrt( (m**2).sum(keepdims=True,dim=-2) )) )
+
+        MSE = torch.nn.MSELoss(reduction='sum')
+        loss_sum_i = MSE(torch.sum(m,dim=-1,keepdims=True),torch.ones((1,n_vertices,1)))
+        loss_sum_j = MSE(torch.sum(m,dim=-2,keepdims=True),torch.ones((1,1,n_vertices)))
+
+        total_loss = loss_i + loss_j + self.coeff*( loss_sum_i + loss_sum_j )
+
+        return total_loss
+
+
+class tsp_perm_loss(nn.Module):
+    def __init__(self, loss=nn.BCELoss(reduction='none'), lambda_perm = 1e-2, perm_coeff = 1):
+        super(tsp_perm_loss, self).__init__()
+        self.base_loss = loss
+        self.normalize = torch.nn.Sigmoid()#Softmax(dim=2)
+        self.lambda_perm = lambda_perm
+        self.perm_penality = Perm_Penal(coeff = perm_coeff)
+        
+    def forward(self, raw_scores, target):#Used to have also a mask as argument -> Ask MLelarge
+        """
+        raw_scores (bs,n_vertices,n_vertices)
+        """
+        perm_contrib = self.perm_penality(raw_scores)
+
+        proba = self.normalize(raw_scores)
+        loss = self.base_loss(proba,target)
+        return torch.mean(loss) + self.lambda_perm * perm_contrib # Was return torch.mean(mask*self.loss(proba,target))
+
 class tsp_fiedler_loss(nn.Module):
     def __init__(self, fiedler_coeff = 1e-2, n_vertices=None, loss=nn.BCELoss(reduction='none')):
         super(tsp_fiedler_loss, self).__init__()

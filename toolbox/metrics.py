@@ -183,6 +183,16 @@ def get_path(raw_scores,device='cpu',topk=2):
     y_onehot.scatter_(2, ind, 1)
     return y_onehot
 
+def get_path_edges(raw_scores,device='cpu',topk=1):
+    n_vertices = raw_scores.shape[-1]
+    rs = raw_scores + raw_scores.transpose(-2,-1)
+    rs_flat = rs.flatten()
+    _, ind = torch.topk(rs_flat, 2*topk*n_vertices, dim =-1)
+    y_onehot = torch.zeros_like(rs_flat).to(device)
+    y_onehot.scatter_(-1,ind,1)
+    return y_onehot.reshape(raw_scores.shape)
+
+
 def compute_accuracy_tsp(raw_scores,target,device='cpu'):
     y_onehot = get_path(raw_scores,device=device)
     return torch.all(y_onehot==target,dim=1).all(dim=1)
