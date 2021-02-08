@@ -101,6 +101,8 @@ def beam_decode(raw_scores,xs,ys,b=5,start_mode="r",chosen=0):
         start_fn = get_confused
     elif start_mode=='sure': #Start from the surest edge
         start_fn = get_surest
+    else:
+        raise KeyError, "Start function {} not implemented.".format(start_mode)
 
     
     with torch.no_grad(): #Make sure no gradient is computed
